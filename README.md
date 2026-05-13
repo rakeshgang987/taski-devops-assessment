@@ -624,14 +624,15 @@ The solution includes:
 
 ### Docker container monitoring
 
-Documentation Assets
-# Architecture Diagram
+# Documentation Assets
 
-![Architecture Diagram](docs/architecture-diagram.png)
-# CI/CD Pipeline
+## Architecture Diagram
 
-![Pipeline Screenshot](docs/pipeline-success.png)
+![Architecture Diagram](./docs/architecture-diagram.png)
 
+## CI/CD Pipeline
+
+![Pipeline Screenshot](./docs/pipeline-success.png)
 Future Improvements
 
 Potential production enhancements:
