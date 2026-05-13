@@ -1,3 +1,97 @@
+# name: CI-CD Pipeline
+
+# on:
+#   push:
+#     branches:
+#       - main
+
+# env:
+#   AWS_REGION: us-east-1
+#   ECR_REPOSITORY: dev-node-app-repo
+#   IMAGE_TAG: latest
+
+# jobs:
+#   ci-cd:
+#     runs-on: ubuntu-latest
+
+#     defaults:
+#       run:
+#         working-directory: app
+
+#     steps:
+
+#       - name: Checkout Source
+#         uses: actions/checkout@v4
+
+#       - name: Setup Node.js
+#         uses: actions/setup-node@v4
+#         with:
+#           node-version: 20
+
+#       - name: Install Dependencies
+#         run: npm install
+
+#       - name: Run Tests
+#         run: npm test
+
+#       - name: Run ESLint
+#         run: npm run lint || true
+
+#       - name: Run Security Audit
+#         run: npm audit --audit-level=high || true
+
+#       - name: Configure AWS Credentials
+#         uses: aws-actions/configure-aws-credentials@v4
+#         with:
+#           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#           aws-region: ${{ secrets.AWS_REGION }}
+
+#       - name: Login to Amazon ECR
+#         id: login-ecr
+#         uses: aws-actions/amazon-ecr-login@v2
+
+#       - name: Build Docker Image
+#         run: |
+#           docker build -t $ECR_REPOSITORY:$IMAGE_TAG .
+
+#       - name: Tag Docker Image
+#         run: |
+#           docker tag $ECR_REPOSITORY:$IMAGE_TAG \
+#           ${{ steps.login-ecr.outputs.registry }}/$ECR_REPOSITORY:$IMAGE_TAG
+
+#       - name: Push Docker Image
+#         run: |
+#           docker push \
+#           ${{ steps.login-ecr.outputs.registry }}/$ECR_REPOSITORY:$IMAGE_TAG
+
+#       - name: Deploy to EC2
+#         uses: appleboy/ssh-action@v1.0.3
+#         with:
+#           host: ${{ secrets.EC2_HOST }}
+#           username: ${{ secrets.EC2_USER }}
+#           key: ${{ secrets.EC2_SSH_KEY }}
+#           script: |
+#             aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 833319601533.dkr.ecr.us-east-1.amazonaws.com
+
+#             docker pull 833319601533.dkr.ecr.us-east-1.amazonaws.com/dev-node-app-repo:latest
+
+#             docker stop taski-app || true
+
+#             docker rm taski-app || true
+
+#             docker run -d -p 3000:3000 \
+#             --name taski-app \
+#             833319601533.dkr.ecr.us-east-1.amazonaws.com/dev-node-app-repo:latest
+
+#       - name: Health Check
+#         run: |
+#           sleep 15
+#           curl -f http://${{ secrets.EC2_HOST }}:3000/health
+
+#       - name: Deployment Success
+#         run: echo "Application deployed successfully"
+
 name: CI-CD Pipeline
 
 on:
@@ -9,6 +103,7 @@ env:
   AWS_REGION: us-east-1
   ECR_REPOSITORY: dev-node-app-repo
   IMAGE_TAG: latest
+  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
 
 jobs:
   ci-cd:
@@ -20,26 +115,39 @@ jobs:
 
     steps:
 
+      # =========================
+      # 1. SOURCE
+      # =========================
       - name: Checkout Source
         uses: actions/checkout@v4
 
+      # =========================
+      # 2. SETUP NODE
+      # =========================
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
       - name: Install Dependencies
-        run: npm install
+        run: npm ci
 
+      # =========================
+      # 3. TEST + QUALITY
+      # =========================
       - name: Run Tests
         run: npm test
 
       - name: Run ESLint
-        run: npm run lint || true
+        run: npm run lint
 
+      # IMPORTANT: now FAIL pipeline if vulnerabilities exist
       - name: Run Security Audit
-        run: npm audit --audit-level=high || true
+        run: npm audit --audit-level=high
 
+      # =========================
+      # 4. AWS CONFIG
+      # =========================
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -51,6 +159,9 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
+      # =========================
+      # 5. DOCKER BUILD
+      # =========================
       - name: Build Docker Image
         run: |
           docker build -t $ECR_REPOSITORY:$IMAGE_TAG .
@@ -58,13 +169,26 @@ jobs:
       - name: Tag Docker Image
         run: |
           docker tag $ECR_REPOSITORY:$IMAGE_TAG \
-          ${{ steps.login-ecr.outputs.registry }}/$ECR_REPOSITORY:$IMAGE_TAG
+          $AWS_ACCOUNT_ID.dkr.ecr.${AWS_REGION}.amazonaws.com/$ECR_REPOSITORY:$IMAGE_TAG
 
       - name: Push Docker Image
         run: |
-          docker push \
-          ${{ steps.login-ecr.outputs.registry }}/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $AWS_ACCOUNT_ID.dkr.ecr.${AWS_REGION}.amazonaws.com/$ECR_REPOSITORY:$IMAGE_TAG
 
+      # =========================
+      # 6. IMAGE SECURITY SCAN (IMPORTANT)
+      # =========================
+      - name: Trivy Image Scan
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
+          format: table
+          exit-code: 1
+          severity: CRITICAL,HIGH
+
+      # =========================
+      # 7. DEPLOY TO EC2
+      # =========================
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -72,22 +196,62 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 833319601533.dkr.ecr.us-east-1.amazonaws.com
+            aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com
 
-            docker pull 833319601533.dkr.ecr.us-east-1.amazonaws.com/dev-node-app-repo:latest
+            docker pull $AWS_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/$ECR_REPOSITORY:$IMAGE_TAG
 
             docker stop taski-app || true
-
             docker rm taski-app || true
 
             docker run -d -p 3000:3000 \
-            --name taski-app \
-            833319601533.dkr.ecr.us-east-1.amazonaws.com/dev-node-app-repo:latest
+              --name taski-app \
+              $AWS_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/$ECR_REPOSITORY:$IMAGE_TAG
 
+      # =========================
+      # 8. HEALTH CHECK
+      # =========================
       - name: Health Check
         run: |
           sleep 15
           curl -f http://${{ secrets.EC2_HOST }}:3000/health
 
-      - name: Deployment Success
-        run: echo "Application deployed successfully"
+      # =========================
+      # 9. EMAIL NOTIFICATION (SUCCESS)
+      # =========================
+      - name: Send Success Email
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "CI/CD Deployment Successful 🚀"
+          to: ${{ secrets.EMAIL_TO }}
+          from: DevOps Pipeline
+          body: |
+            Deployment SUCCESS ✅
+
+            App deployed successfully to EC2
+            Image pushed to ECR
+            Health check passed
+
+      # =========================
+      # 10. EMAIL NOTIFICATION (FAILURE)
+      # =========================
+      - name: Send Failure Email
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "CI/CD Deployment FAILED ❌"
+          to: ${{ secrets.EMAIL_TO }}
+          from: DevOps Pipeline
+          body: |
+            Deployment FAILED ❌
+
+            Check GitHub Actions logs for details.
