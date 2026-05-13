@@ -628,12 +628,15 @@ The solution includes:
 
 ## Architecture Diagram
 
-![Architecture Diagram](./docs/architecture-diagram.png)
+<p align="center">
+  <img src="docs/architecture-diagram.png" />
+</p>
 
 ## CI/CD Pipeline
 
-![Pipeline Screenshot](./docs/pipeline-success.png)
-Future Improvements
+<p align="center">
+  <img src="docs/pipeline-success.png" />
+</p>
 
 Potential production enhancements:
 
