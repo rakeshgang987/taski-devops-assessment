@@ -1,3 +1,19 @@
 node_modules/
 coverage/
 .env
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+.terraform.lock.hcl
+
+# Environment files
+*.tfvars
+
+# Node
+node_modules/
+coverage/
+
+# Secrets
+.env
+pem
