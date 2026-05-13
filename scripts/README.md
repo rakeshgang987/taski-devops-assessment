@@ -1,105 +1,12 @@
-<!-- # Automation Scripts Documentation
 
-This directory contains production-grade operational automation scripts for the taSki DevOps assessment project.
-
----
-
-# 1. deploy.sh
-
-## Purpose
-Deploys the latest Docker image to the EC2 instance.
-
-## Features
-- Pull latest image from ECR
-- Stop old container
-- Remove old container
-- Start new container
-- Run health checks
-
-## Usage
-
-```bash
-./deploy.sh
-```
-
----
-
-# 2. rollback.sh
-
-## Purpose
-Rollback deployment to a previous stable image.
-
-## Usage
-
-```bash
-./rollback.sh <previous-image>
-```
-
-Example:
-
-```bash
-./rollback.sh dev-node-app-repo:v1
-```
-
----
-
-# 3. health-check.sh
-
-## Purpose
-Validate application availability and health endpoint.
-
-## Usage
-
-```bash
-./health-check.sh
-```
-
-Exit Codes:
-- 0 = healthy
-- 1 = unhealthy
-
----
-
-# 4. setup-env.sh
-
-## Purpose
-Bootstrap a new Ubuntu server with required dependencies.
-
-## Installed Components
-- Docker
-- AWS CLI
-- Curl
-
-## Usage
-
-```bash
-./setup-env.sh
-```
-
----
-
-# 5. rotate-logs.sh
-
-## Purpose
-Compress and rotate oversized log files.
-
-## Features
-- Prevent disk exhaustion
-- Compress logs over 10MB
-
-## Usage
-
-```bash
-./rotate-logs.sh
-``` -->
 ###########################################################
 
 ---
 
 # scripts/README.md
 
-````md
-# Automation Scripts Documentation
+
+### Automation Scripts Documentation
 
 ## Overview
 
@@ -154,20 +61,18 @@ Automates deployment of the latest Docker image from AWS ECR to the EC2 instance
 
 ## Usage
 
-```bash
 ./deploy.sh
 
 
 Example Output
-```
-    tarting deployment...
+   tarting deployment...
     Pulling latest Docker image...
     Stopping existing container...
     Starting new container...
     Running health check...
     Deployment successful!
-```
 
+ 
 2. rollback.sh
 Purpose
 
@@ -211,7 +116,7 @@ Validate HTTP status code
 Return success or failure
 
 Usage
-``
+```
 ./health-check.sh
 ```
 
