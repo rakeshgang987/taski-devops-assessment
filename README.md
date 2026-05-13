@@ -628,11 +628,9 @@ Documentation Assets
 # Architecture Diagram
 
 ![Architecture Diagram](docs/architecture-diagram.png)
-Pipeline Screenshot
+# CI/CD Pipeline
 
-# Pipeline Screenshot
-
-![Pipeline Screenshot](docs/pipeline-screenshot.png)
+![Pipeline Screenshot](docs/pipeline-success.png)
 
 Future Improvements
 
