@@ -154,7 +154,7 @@ Response:
 ```
 {
   "status": "success",
-  "message": "Node.js DevOps Assessment App Running"
+  "message": "taSki DevOps Assessment App Running"
 }
 ```
 Health Check Endpoint
@@ -298,55 +298,59 @@ EC2 Public IP
 ECR Repository URL
 ```
 
-####  CI/CD Pipeline
+#### CI/CD Pipeline
 
-#### The project uses GitHub Actions for CI/CD automation.
+The project uses GitHub Actions for full CI/CD automation.
 
-Pipeline Stages
-1. Source Stage
+### Pipeline Flow
 
-Triggered automatically on push to the main branch.
+1. Source Stage  
+Triggered on push to `main` branch
 
-2. Build Stage
-Checkout repository
-Install Node.js dependencies
-Build Docker image
+2. Build Stage  
+- Install dependencies  
+- Run Node.js build process  
+- Build Docker image  
 
-3. Test Stage
-Run Jest unit tests
-Run ESLint validation
+3. Test Stage  
+- Run Jest unit tests  
+- Run ESLint validation  
 
-4. Security Scan Stage
-Execute npm audit
-Scan dependencies for vulnerabilities
+4. Security Scan Stage  
+- npm audit (dependency scanning)  
+- Trivy container image scan (vulnerability scanning)  
 
-5. Containerization Stage
-Build Docker image
-Tag image using semantic versioning
-Push image to AWS ECR
+5. Containerization Stage  
+- Build Docker image  
+- Tag image with latest  
+- Push to AWS ECR  
 
-6. Deployment Stage
-SSH into EC2 instance
-Pull latest Docker image
-Stop existing container
-Start updated container
+6. Deployment Stage  
+- SSH into EC2 instance  
+- Pull latest Docker image from ECR  
+- Stop existing container  
+- Run updated container  
 
-7. Health Check Stage
-Validate application health endpoint
-Ensure deployment success
-GitHub Actions Secrets
+7. Notification Stage  
+- Sends email notification on success/failure of pipeline  
 
-The following GitHub Secrets are configured:
-
-Secret	                            Purpose
-AWS_ACCESS_KEY_ID	                AWS authentication
-AWS_SECRET_ACCESS_KEY	            AWS authentication
-EC2_HOST	                        EC2 public IP
-EC2_USER	                        SSH user
-EC2_SSH_KEY	                        Private SSH key
-
-
+8. Health Check  
+- Validates `/health` endpoint after deployment  
 ###  Security Best Practices Implemented
+
+### Container Security Scanning
+
+- Trivy is integrated into CI/CD pipeline
+- Scans Docker images for known vulnerabilities
+- Fails pipeline on HIGH/CRITICAL issues (security gate)
+- Ensures production-grade secure container deployment
+
+### Pipeline Notifications
+
+- Email notifications configured using GitHub Actions
+- Sends success/failure status after deployment
+- Used instead of Slack integration
+
 ### Secrets Management
 No credentials stored in source code
 GitHub Secrets used for CI/CD
@@ -407,6 +411,145 @@ Potential production enhancements:
 * Grafana dashboards
 * SonarQube integration
 * SSL/TLS with Application Load Balancer
+
+## Production Readiness Improvements
+
+- Blue/Green deployments (future enhancement)
+- Kubernetes migration (EKS)
+- Centralized logging (ELK stack)
+- Monitoring with Prometheus & Grafana
+- Automated rollback on failure detection
+
+###################################################
+
+🧱 Terraform Infrastructure (Updated Section for README)
+Overview
+
+The infrastructure is provisioned using Terraform (Infrastructure as Code) and supports multi-environment deployment across:
+
+Development (dev)
+Staging (staging)
+Production (prod)
+
+Each environment is isolated using separate Terraform state files stored in AWS S3 backend, with state locking enabled using DynamoDB.
+
+📁 Terraform Directory Structure
+terraform/
+│
+├── main.tf
+├── backend.tf
+├── provider.tf
+├── variables.tf
+├── outputs.tf
+├── environments/
+│   ├── dev.tfvars
+│   ├── staging.tfvars
+│   └── prod.tfvars
+☁️ Infrastructure Components Provisioned
+
+Terraform provisions the following AWS resources:
+
+Networking
+VPC
+Public Subnet
+Internet Gateway
+Route Table
+Route Table Association
+Security
+Security Group (HTTP 3000 + SSH 22)
+IAM role-based access (if configured in your setup)
+Compute
+EC2 instance (Node.js application host)
+Container Registry
+AWS ECR repository (Docker image storage)
+
+🔐 Remote State Management (Important)
+
+Terraform state is stored remotely in AWS S3:
+
+Bucket: taski-terraform-state-bucket
+State Locking: DynamoDB (taski-terraform-locks)
+Encryption: Enabled (AES256)
+State Isolation Strategy
+
+Each environment uses a separate state file:
+
+dev     → dev/terraform.tfstate
+staging → staging/terraform.tfstate
+prod    → prod/terraform.tfstate
+
+This ensures:
+
+No environment conflicts
+Safe deployments
+Independent lifecycle per environment
+⚙️ Environment Configuration
+
+Terraform uses variable files for environment separation:
+
+dev.tfvars
+aws_region    = "us-east-1"
+environment   = "dev"
+instance_type = "t2.micro"
+key_name      = "taski-key"
+staging.tfvars
+aws_region    = "us-east-1"
+environment   = "staging"
+instance_type = "t2.micro"
+key_name      = "taski-key"
+prod.tfvars
+aws_region    = "us-east-1"
+environment   = "prod"
+instance_type = "t2.micro"
+key_name      = "taski-key"
+
+🚀 Terraform Workflow
+1. Initialize Terraform
+terraform init -reconfigure
+2. Select Environment (State Switch)
+Dev
+terraform init -reconfigure -backend-config="key=dev/terraform.tfstate"
+Staging
+terraform init -reconfigure -backend-config="key=staging/terraform.tfstate"
+Prod
+terraform init -reconfigure -backend-config="key=prod/terraform.tfstate"
+3. Validate Configuration
+terraform validate
+4. Plan Deployment
+terraform plan -var-file="environments/dev.tfvars"
+5. Apply Infrastructure
+terraform apply -var-file="environments/dev.tfvars"
+6. Destroy Infrastructure (Cleanup)
+terraform destroy -var-file="environments/dev.tfvars"
+🔒 Security Best Practices Implemented
+
+No hardcoded credentials in code
+IAM roles with least privilege principle
+S3 backend encryption enabled
+State locking using DynamoDB
+Security groups restricted to required ports only
+📊 Outputs
+
+Terraform outputs include:
+
+EC2 Public IP
+ECR Repository URL
+Infrastructure identifiers
+
+Retrieve outputs using:
+
+terraform output
+### Design Decisions
+
+S3 + DynamoDB backend chosen for reliable state management and locking
+Environment-based tfvars used for scalability and separation of concerns
+Single module design for simplicity (can be extended into modules for production-scale systems)
+Tag-based environment isolation instead of separate AWS accounts (simpler for assessment)
+
+📌 Notes
+Dev, staging, and prod environments are fully isolated at the state level
+Infrastructure is fully reproducible via Terraform
+No manual AWS console changes are required or recommended
 
 #### Cleanup
 
