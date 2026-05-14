@@ -422,70 +422,68 @@ Potential production enhancements:
 
 ###################################################
 
-🧱 Terraform Infrastructure (Updated Section for README)
-Overview
+### Terraform Infrastructure
+🧱 Terraform Infrastructure Overview
 
-The infrastructure is provisioned using Terraform (Infrastructure as Code) and supports multi-environment deployment across:
+The infrastructure is fully provisioned using Terraform (Infrastructure as Code) and supports multi-environment deployments across:
 
 Development (dev)
 Staging (staging)
 Production (prod)
 
-Each environment is isolated using separate Terraform state files stored in AWS S3 backend, with state locking enabled using DynamoDB.
+Each environment is fully isolated using:
+
+Separate tfvars configuration files
+Environment-based naming strategy
+AWS S3 backend state separation using environment-specific keys
+DynamoDB state locking for concurrency safety
+
+This ensures safe, reproducible, and environment-independent deployments.
 
 📁 Terraform Directory Structure
 terraform/
-│
+
 ├── main.tf
 ├── backend.tf
 ├── provider.tf
 ├── variables.tf
 ├── outputs.tf
+├── backend.tf
 ├── environments/
 │   ├── dev.tfvars
 │   ├── staging.tfvars
 │   └── prod.tfvars
 ☁️ Infrastructure Components Provisioned
 
-Terraform provisions the following AWS resources:
+Terraform provisions identical infrastructure across all environments:
 
-Networking
+🌐 Networking
 VPC
 Public Subnet
 Internet Gateway
 Route Table
 Route Table Association
-Security
-Security Group (HTTP 3000 + SSH 22)
-IAM role-based access (if configured in your setup)
-Compute
-EC2 instance (Node.js application host)
-Container Registry
-AWS ECR repository (Docker image storage)
+🔐 Security
 
-🔐 Remote State Management (Important)
+Security Group
+Port 3000 (Application access)
+Port 22 (SSH access)
+IAM roles (if enabled)
+### Compute
 
-Terraform state is stored remotely in AWS S3:
+EC2 instance (Docker host for Node.js application)
+📦 Container Registry
+AWS ECR repository for Docker images
+🔐 Remote State Management
 
-Bucket: taski-terraform-state-bucket
+Terraform state is stored remotely in AWS:
+
+S3 Bucket: taski-terraform-state-bucket
 State Locking: DynamoDB (taski-terraform-locks)
 Encryption: Enabled (AES256)
-State Isolation Strategy
+📦 Environment Strategy
 
-Each environment uses a separate state file:
-
-dev     → dev/terraform.tfstate
-staging → staging/terraform.tfstate
-prod    → prod/terraform.tfstate
-
-This ensures:
-
-No environment conflicts
-Safe deployments
-Independent lifecycle per environment
-⚙️ Environment Configuration
-
-Terraform uses variable files for environment separation:
+Each environment uses its own configuration file:
 
 dev.tfvars
 aws_region    = "us-east-1"
@@ -503,62 +501,66 @@ environment   = "prod"
 instance_type = "t2.micro"
 key_name      = "taski-key"
 
-🚀 Terraform Workflow
+🚀 Terraform Workflow (Multi-Environment)
 1. Initialize Terraform
 terraform init -reconfigure
-2. Select Environment (State Switch)
+
+2. Select Environment (State Isolation)
 Dev
 terraform init -reconfigure -backend-config="key=dev/terraform.tfstate"
 Staging
 terraform init -reconfigure -backend-config="key=staging/terraform.tfstate"
 Prod
 terraform init -reconfigure -backend-config="key=prod/terraform.tfstate"
+
 3. Validate Configuration
 terraform validate
 4. Plan Deployment
+Dev
 terraform plan -var-file="environments/dev.tfvars"
+Staging
+terraform plan -var-file="environments/staging.tfvars"
+Prod
+terraform plan -var-file="environments/prod.tfvars"
+
 5. Apply Infrastructure
+Dev
 terraform apply -var-file="environments/dev.tfvars"
+Staging
+terraform apply -var-file="environments/staging.tfvars"
+Prod
+terraform apply -var-file="environments/prod.tfvars"
+
 6. Destroy Infrastructure (Cleanup)
 terraform destroy -var-file="environments/dev.tfvars"
-🔒 Security Best Practices Implemented
 
-No hardcoded credentials in code
-IAM roles with least privilege principle
-S3 backend encryption enabled
-State locking using DynamoDB
-Security groups restricted to required ports only
+🔒 Security Best Practices Implemented
+No hardcoded secrets in Terraform code
+IAM roles follow least privilege principle
+Remote state stored securely in S3
+State locking enabled using DynamoDB
+Environment isolation prevents cross-environment impact
+Security groups restrict only required ports (3000, 22)
 📊 Outputs
 
-Terraform outputs include:
+Terraform provides:
 
 EC2 Public IP
 ECR Repository URL
-Infrastructure identifiers
+Environment-specific resource identifiers
 
 Retrieve outputs using:
 
 terraform output
-### Design Decisions
+#### Design Decisions
+Single Terraform codebase for all environments → reduces duplication
+Environment-based tfvars → clean separation of configuration
+S3 + DynamoDB backend → production-grade state management
+Tag-based environment isolation → simple and effective for assessment
+Reusable infrastructure pattern → scalable to real-world systems
 
-S3 + DynamoDB backend chosen for reliable state management and locking
-Environment-based tfvars used for scalability and separation of concerns
-Single module design for simplicity (can be extended into modules for production-scale systems)
-Tag-based environment isolation instead of separate AWS accounts (simpler for assessment)
-
-📌 Notes
-Dev, staging, and prod environments are fully isolated at the state level
-Infrastructure is fully reproducible via Terraform
-No manual AWS console changes are required or recommended
-
-#### Cleanup
-
-To destroy infrastructure:
-```
-cd terraform
-terraform destroy -var-file="environments/dev.tfvars"
-```
-Author
-
-Rakesh Gang
-
+#### Final Notes
+Dev, staging, and prod are fully supported via configuration
+Infrastructure is fully reproducible
+No manual AWS console changes required
+Same codebase promotes consistency across environments
