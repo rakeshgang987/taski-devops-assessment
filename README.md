@@ -418,6 +418,13 @@ The solution includes:
 
 ---
 
+### 6. CI/CD Email Notification
+
+This confirms that pipeline status notifications are working successfully using SMTP integration.
+
+<p align="center">
+  <img src="docs/email-notification.png" alt="Email Notification" width="800"/>
+</p>
 ###  Terraform Output
 <p align="center">
   <img src="docs/terraform-output.png" alt="Terraform Output" width="800"/>
