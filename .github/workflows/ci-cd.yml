@@ -261,16 +261,20 @@ jobs:
     #         Image pushed to ECR
     #         Health check passed
         
+      - name: Debug Email Secrets
+        run: |
+         echo "EMAIL USER SET"  
+
       - name: Send Success Email
         uses: dawidd6/action-send-mail@v3
         with:
             server_address: smtp.gmail.com
-            server_port: 587
-            secure: false
+            server_port: 465
+            secure: true
             username: ${{ secrets.EMAIL_USERNAME }}
             password: ${{ secrets.EMAIL_PASSWORD }}
             subject: "CI/CD Deployment Successful 🚀"
-            to: ${{ secrets.EMAIL_TO }}
+            to: ${{ secrets.EMAIL_USERNAME }}
             from: ${{ secrets.EMAIL_USERNAME }}
             body: |
                 Deployment SUCCESS ✅
@@ -282,19 +286,19 @@ jobs:
       # =========================
       # 10. EMAIL NOTIFICATION (FAILURE)
       # =========================
-      - name: Send Failure Email
-        if: failure()
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: smtp.gmail.com
-          server_port: 465
-          secure: true
-          username: ${{ secrets.EMAIL_USERNAME }}
-          password: ${{ secrets.EMAIL_PASSWORD }}
-          subject: "CI/CD Deployment FAILED ❌"
-          to: ${{ secrets.EMAIL_TO }}
-          from: DevOps Pipeline
-          body: |
-            Deployment FAILED ❌
+    #   - name: Send Failure Email
+    #     if: failure()
+    #     uses: dawidd6/action-send-mail@v3
+    #     with:
+    #       server_address: smtp.gmail.com
+    #       server_port: 465
+    #       secure: true
+    #       username: ${{ secrets.EMAIL_USERNAME }}
+    #       password: ${{ secrets.EMAIL_PASSWORD }}
+    #       subject: "CI/CD Deployment FAILED ❌"
+    #       to: ${{ secrets.EMAIL_TO }}
+    #       from: DevOps Pipeline
+    #       body: |
+    #         Deployment FAILED ❌
 
-            Check GitHub Actions logs for details.
+    #         Check GitHub Actions logs for details.
