@@ -243,23 +243,41 @@ jobs:
       # =========================
       # 9. EMAIL NOTIFICATION (SUCCESS)
       # =========================
+    #   - name: Send Success Email
+    #     uses: dawidd6/action-send-mail@v3
+    #     with:
+    #       server_address: smtp.gmail.com
+    #       server_port: 465
+    #       secure: true
+    #       username: ${{ secrets.EMAIL_USERNAME }}
+    #       password: ${{ secrets.EMAIL_PASSWORD }}
+    #       subject: "CI/CD Deployment Successful 🚀"
+    #       to: ${{ secrets.EMAIL_TO }}
+    #       from: DevOps Pipeline
+    #       body: |
+    #         Deployment SUCCESS ✅
+
+    #         App deployed successfully to EC2
+    #         Image pushed to ECR
+    #         Health check passed
+        
       - name: Send Success Email
         uses: dawidd6/action-send-mail@v3
         with:
-          server_address: smtp.gmail.com
-          server_port: 465
-          secure: true
-          username: ${{ secrets.EMAIL_USERNAME }}
-          password: ${{ secrets.EMAIL_PASSWORD }}
-          subject: "CI/CD Deployment Successful 🚀"
-          to: ${{ secrets.EMAIL_TO }}
-          from: DevOps Pipeline
-          body: |
-            Deployment SUCCESS ✅
+            server_address: smtp.gmail.com
+            server_port: 587
+            secure: false
+            username: ${{ secrets.EMAIL_USERNAME }}
+            password: ${{ secrets.EMAIL_PASSWORD }}
+            subject: "CI/CD Deployment Successful 🚀"
+            to: ${{ secrets.EMAIL_TO }}
+            from: ${{ secrets.EMAIL_USERNAME }}
+            body: |
+                Deployment SUCCESS ✅
+                App deployed successfully to EC2
+                Image pushed to ECR
+                Health check passed
 
-            App deployed successfully to EC2
-            Image pushed to ECR
-            Health check passed
 
       # =========================
       # 10. EMAIL NOTIFICATION (FAILURE)
