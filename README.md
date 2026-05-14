@@ -401,6 +401,27 @@ The solution includes:
   <img src="docs/pipeline-success.png" />
 </p>
 
+
+---
+
+###  Application Running on EC2
+<p align="center">
+  <img src="docs/app-running.png" alt="App Running" width="800"/>
+</p>
+
+---
+
+###  Health Check
+<p align="center">
+  <img src="docs/health-check.png" alt="Health Check" width="800"/>
+</p>
+
+---
+
+###  Terraform Output
+<p align="center">
+  <img src="docs/terraform-output.png" alt="Terraform Output" width="800"/>
+</p>
 Potential production enhancements:
 
 * Kubernetes deployment
